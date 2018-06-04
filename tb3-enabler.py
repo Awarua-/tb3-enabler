@@ -31,7 +31,10 @@ md5_version = {
     "b58ba765f901b3b6f2fac39c2040e523": ["10.13.0 (17A365)"],
     "bcb319c05541da0ccffd7a52da7236c5": ["10.13.1 (17B48)"],
     "427b87e16e15c55c687a565fbd555e03": ["10.13.2 (17C88)"],
-    "a47a724fdb13df4cef1b662b7ccbc9d1": ["10.13.3 (17D47)"]
+    "a47a724fdb13df4cef1b662b7ccbc9d1": ["10.13.3 (17D47)"],
+    "f2ed59d381f83c61ad0ec835364b2b79": ["10.13.4 (17E199)"],
+    "e64e2678bb38f6f60d3a9647c5d53eb6": ["10.13.4 (17E202)"],
+    "2f99fc6e4d586da646a8c80f33b45b9d": ["10.13.5 (17F77)"]
 }
 md5_patch = {
     "00e2f0eb5db157462a83e4de50583e33": "a6c2143c2f085c2c104369d7a1adfe03",
@@ -41,11 +44,14 @@ md5_patch = {
     "58703942f8d4e5d499673c42cab0c923": "86c40c5b6cadcfe56f7a7a1e1d554dc9",
     "8ef3cf6dd8528976717e239aa8b20129": "bc84c36d884178d6e743cd11a8a22e93",
     "9d6788e5afe3369cac79546a66f34842": "f1b280854306616dafb54b679c13e58e",
-    "096de0ab3c312a2e432e056d398a096b": "52f6d17ef3fb3a0a899c0ea6a255afc9  ",
+    "096de0ab3c312a2e432e056d398a096b": "52f6d17ef3fb3a0a899c0ea6a255afc9",
     "b58ba765f901b3b6f2fac39c2040e523": "06a1a1fedc294b1bb78bc92625e412e1",
     "bcb319c05541da0ccffd7a52da7236c5": "d0ae8daed7faccb8107f7b17772163b8",
     "427b87e16e15c55c687a565fbd555e03": "d5c12e6f04d87d5b5a8ceef42cd36531",
-    "a47a724fdb13df4cef1b662b7ccbc9d1": "bcf9f00b8028bd305176816563ab2c00"
+    "a47a724fdb13df4cef1b662b7ccbc9d1": "bcf9f00b8028bd305176816563ab2c00",
+    "f2ed59d381f83c61ad0ec835364b2b79": "9591b6f618d5d6ecc016488bc29e2b9f",
+    "e64e2678bb38f6f60d3a9647c5d53eb6": "555a6efce42709e06530251eb0f71315",
+    "2f99fc6e4d586da646a8c80f33b45b9d": "8fce16c8f5096b01e3cb84678bf5d741"
 }
 md5_patch_r = dict((v, k) for k, v in md5_patch.items())
 
@@ -69,13 +75,16 @@ re_md5 = {
         "8ef3cf6dd8528976717e239aa8b20129",
         "9d6788e5afe3369cac79546a66f34842",
         "096de0ab3c312a2e432e056d398a096b"
-        ],
+    ],
     1: [
         "b58ba765f901b3b6f2fac39c2040e523",
         "bcb319c05541da0ccffd7a52da7236c5",
         "427b87e16e15c55c687a565fbd555e03",
-        "a47a724fdb13df4cef1b662b7ccbc9d1"
-        ]
+        "a47a724fdb13df4cef1b662b7ccbc9d1",
+        "f2ed59d381f83c61ad0ec835364b2b79",
+        "e64e2678bb38f6f60d3a9647c5d53eb6",
+        "2f99fc6e4d586da646a8c80f33b45b9d"
+    ]
 }
 md5_re = dict((v, re_index[k]) for k, l in re_md5.items() for v in l)
 
@@ -91,20 +100,22 @@ def md5(filename):
 def backquote(command):
     return Popen(shlex.split(command), stdout=PIPE).communicate()[0]
 
+
 def check_SIP():
     sip_info = backquote("nvram csr-active-config")
     if sip_info.find("%00%00%00") == -1:
-        print("you must disable System Integrity Protection",file=sys.stderr)
+        print("you must disable System Integrity Protection", file=sys.stderr)
         sys.exit(1)
+
 
 def check_rootness():
     if os.geteuid() != 0:
-        print("you must be root",file=sys.stderr)
+        print("you must be root", file=sys.stderr)
         sys.exit(1)
 
 
 def clear_kext_cache():
-    print( "clearing kext cache...",end="")
+    print("clearing kext cache...", end="")
     backquote("kextcache -system-prelinked-kernel")
     backquote("kextcache -system-caches")
     print("done")
@@ -161,6 +172,7 @@ def apply_patch():
 def perform_backup():
     shutil.copyfile(target, backup)
 
+
 def do_backup():
     check_rootness()
     check_SIP()
@@ -173,25 +185,25 @@ def do_backup():
             try:
                 _, v = backup_status()
             except NoBackup:
-                print( "backing up...",end="")
+                print("backing up...", end="")
                 perform_backup()
-                print( "done")
+                print("done")
             else:
                 if v == t:
                     print("backup found")
                 else:
-                    print("backing up...",end="")
+                    print("backing up...", end="")
                     perform_backup()
                     print("done")
     except UnknownFile as e:
-        print( "unknown file, won't backup (md5=%s)" % e.md5)
+        print("unknown file, won't backup (md5=%s)" % e.md5)
         sys.exit(1)
 
 
 def do_restore():
     check_rootness()
     check_SIP()
-    print("restoring...",end="")
+    print("restoring...", end="")
     backup_status()
     shutil.copyfile(backup, target)
     print("done")
@@ -211,7 +223,7 @@ def do_apply():
         print("unknown file: won't patch (md5=%s)" % e.md5)
         sys.exit(1)
 
-    print("patching...",end="")
+    print("patching...", end="")
     apply_patch()
 
     try:
@@ -222,8 +234,9 @@ def do_apply():
             print("done")
             clear_kext_cache()
     except UnknownFile as e:
-        print("failed (md5=%s), " % e.md5,end="")
+        print("failed (md5=%s), " % e.md5, end="")
         do_restore()
+
 
 def do_force_apply():
     check_rootness()
@@ -237,10 +250,10 @@ def do_force_apply():
     with open(target, 'rb') as f:
         source_data = f.read()
 
-    search_re1012 =  "\x55\x48\x89\xE5\x41\x57\x41\x56\x41\x55\x41\x54\x53\x48\x81\xEC\x38\x01"
+    search_re1012 = "\x55\x48\x89\xE5\x41\x57\x41\x56\x41\x55\x41\x54\x53\x48\x81\xEC\x38\x01"
     replace_re1012 = "\x55\x48\x89\xE5\x31\xC0\x5D\xC3\x41\x55\x41\x54\x53\x48\x81\xEC\x38\x01"
 
-    search_re1013 =  "\x55\x48\x89\xE5\x41\x57\x41\x56\x41\x55\x41\x54\x53\x48\x81\xEC\x28\x01"
+    search_re1013 = "\x55\x48\x89\xE5\x41\x57\x41\x56\x41\x55\x41\x54\x53\x48\x81\xEC\x28\x01"
     replace_re1013 = "\x55\x48\x89\xE5\x31\xC0\x5D\xC3\x41\x55\x41\x54\x53\x48\x81\xEC\x28\x01"
 
     for replace in [replace_re1012, replace_re1013]:
@@ -264,22 +277,23 @@ def do_force_apply():
     print("done, patched md5=%s" % h, end="")
     clear_kext_cache()
 
+
 def do_status():
     try:
-        print("target:",end="")
+        print("target:", end="")
         s, v = target_status()
-        print( s+',', ' or '.join(v))
+        print(s+',', ' or '.join(v))
     except UnknownFile as e:
-        print( "unknown (md5=%s)" % e.md5)
+        print("unknown (md5=%s)" % e.md5)
 
     try:
-        print("backup:",end="")
+        print("backup:", end="")
         s, v = backup_status()
-        print( s+',', ' or '.join(v))
+        print(s+',', ' or '.join(v))
     except NoBackup:
-        print( "none")
+        print("none")
     except UnknownFile as e:
-        print( "unknown (md5=%s)" % e.md5)
+        print("unknown (md5=%s)" % e.md5)
 
 
 def do_diff():
@@ -306,9 +320,9 @@ try:
     function = commands[sys.argv[1]]
     function()
 except IndexError:
-    print("no command provided",file=sys.stderr)
-    print("list of commands: %s" % ', '.join(commands.keys()),file=sys.stderr)
+    print("no command provided", file=sys.stderr)
+    print("list of commands: %s" % ', '.join(commands.keys()), file=sys.stderr)
     sys.exit(1)
 except KeyError:
-    print ("unknown command",file=sys.stderr)
+    print ("unknown command", file=sys.stderr)
     sys.exit(1)
